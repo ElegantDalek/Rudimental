@@ -40,12 +40,6 @@ public class Metronome{
         this.play = play;
     }
 
-
-    public void setPause(boolean pause) {
-        this.isPaused = pause;
-    }
-
-
     public void setTempo(int bpm) {
         this.tempo = bpm;
         if (play) { // If is playing, need to generate new tempoTask

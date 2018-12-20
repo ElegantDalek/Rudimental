@@ -4,8 +4,9 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
-import android.os.Environment;
+import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -17,7 +18,7 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.IOException;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MetronomeUI.OnFragmentInteractionListener {
 
     private Button toggleMetronome, record;
     private SeekBar tempoControl;
@@ -25,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer mp;
     private MediaRecorder mMediaRecorder;
     private Metronome metronome;
+    private ViewPager viewPager;
+    private ViewPageManager viewPageManager;
 
     private boolean isRecording = false;
 
@@ -32,24 +35,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        tempoText = findViewById(R.id.tempoText);
-        record = findViewById(R.id.record);
 
-        initializeMetronome();
-        initializeSlider();
-    }
-    private void initializeMetronome() {
-        metronome = new Metronome(this);
 
-        toggleMetronome = findViewById(R.id.play);
-        toggleMetronome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                metronome.toggle();
-                toggleMetronome.setText((metronome.getPlayState()) ? "Pause" : "Play");
-            }
-        });
+        viewPageManager = new ViewPageManager(getSupportFragmentManager());
+        viewPager = findViewById(R.id.pager);
+        viewPager.setAdapter(viewPageManager);
 
+//        initializeMetronome();
+//        initializeSlider();
     }
 
     private void initializeSlider() {
@@ -93,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
                 mMediaRecorder.start();
                 isRecording = !isRecording;
                 record.setText("STOP");
+                Toast.makeText(this, "Recording... ", Toast.LENGTH_SHORT).show();
             } catch (IOException e) {
                 Toast.makeText(this, "IO Exception", Toast.LENGTH_LONG).show();
                 e.printStackTrace();
@@ -103,6 +97,10 @@ public class MainActivity extends AppCompatActivity {
             isRecording = !isRecording;
             record.setText("Record");
         }
+    }
+
+    public void onFragmentInteraction(Uri uri) {
+
     }
 
 }
