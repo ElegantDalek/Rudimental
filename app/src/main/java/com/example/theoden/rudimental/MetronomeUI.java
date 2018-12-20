@@ -1,14 +1,23 @@
 package com.example.theoden.rudimental;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.IOException;
 
 
 /**
@@ -25,6 +34,10 @@ public class MetronomeUI extends Fragment {
     private TextView tempoText;
     private Button record, toggleMetronome;
     private Metronome metronome;
+    private SeekBar tempoControl;
+    private MediaRecorder mMediaRecorder;
+
+    private boolean isRecording = false;
 
     public MetronomeUI() {
         // Required empty public constructor
@@ -57,8 +70,15 @@ public class MetronomeUI extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_metronome_ui, container, false);
         tempoText = rootView.findViewById(R.id.tempoText);
         record = rootView.findViewById(R.id.record);
+        record.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toggleRecord();
+            }
+        });
 
         initializeMetronome(rootView);
+        initializeSlider(rootView);
         return rootView;
     }
 
@@ -91,6 +111,59 @@ public class MetronomeUI extends Fragment {
             }
         });
 
+    }
+
+    private void initializeSlider(View rootView) {
+        tempoControl = rootView.findViewById(R.id.tempoControl);
+        tempoControl.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                int newTempo = progress + 50;
+                metronome.setTempo(newTempo);
+                tempoText.setText(Integer.toString(newTempo));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+    }
+    public void toggleRecord() {
+        // Requests permission if not active, see below
+        // https://stackoverflow.com/questions/37290752/java-lang-runtimeexception-setaudiosource-failed
+        if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.RECORD_AUDIO},
+                    10);
+        } else if (!isRecording) {
+            mMediaRecorder = new MediaRecorder();
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_2_TS);
+            File newFile = new File(getActivity().getExternalFilesDir(null), "demoFile.mp3");
+            mMediaRecorder.setOutputFile(newFile);
+            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            try {
+                mMediaRecorder.prepare();
+                mMediaRecorder.start();
+                isRecording = !isRecording;
+                record.setText("STOP");
+                Toast.makeText(getActivity(), "Recording... ", Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                Toast.makeText(getActivity(), "IO Exception", Toast.LENGTH_LONG).show();
+                e.printStackTrace();
+            }
+        } else {
+            mMediaRecorder.stop();
+            mMediaRecorder.release();
+            isRecording = !isRecording;
+            record.setText("Record");
+        }
     }
     /**
      * This interface must be implemented by activities that contain this
